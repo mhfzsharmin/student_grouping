@@ -1,0 +1,58 @@
+---
+title: "Student grouping by Tabu Search"
+output: html_document
+---
+
+This vignette describes how to run the genetic algorithm code given a student survey. The algorithm implemented and used in this vignette was taken from the following article: `http://ieeexplore.ieee.org/document/5518761/`
+
+```{r, message=FALSE, warning=FALSE}
+root = paste0(getwd()) #root = 
+#load the functions
+source(paste0(root, "/code/ga.r"))
+
+```
+
+
+```{r}
+#read the input file
+tab = read.table(paste0(root, '/example/simple-survey.csv'), sep=',')
+group_size = 6
+total_student = nrow(tab) - 1
+# print survey results
+head(tab)
+```
+
+
+Before running the algorithm, I am parsing `simple-survey.csv` file for student feedback. The input is then updated into a list of matrices where each matrix contains `student-skill-level` of size `student_countXskill_count`. Please change the following code block and the definition of `arrange_skills` function according to your input file. 
+```{r}
+# read the 2nd column for skills on various subjects
+skills_knowledge = as.character(tab[-1,2]); 
+
+# read the 2nd column for social skills
+social_skills = as.character(tab[-1,4])
+
+skills = arrange_skills(total_student, skills_knowledge, social_skills)
+```
+
+
+Run the k-nary-tabu search algorithm. the algorithm takes considerable amount of time to run and the algorithm writes the group configuration in `group_configuration.txt` file. For new survey, run the following code fragment to generate `group_configuration.txt` file for next stages.
+```{r, eval=FALSE}
+config = k_nary_tabu(total_student, grpsize, eval_maximally_diverse_config, skills)
+```
+
+
+I am reading previously generated group configuration file: `group_configuration.txt`.
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+config = read.table('group_configuration.txt')
+```
+
+Outputting the group results and checking the grouping quality.
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+ncls = 56; grpsize = 4
+
+skills = read_skills(ncls)
+grps = eval_grouping(config, 'subjects'); grps
+grps = eval_grouping(config, 'socials'); grps
+eval_config2(config$V1, skills)
+
+```
