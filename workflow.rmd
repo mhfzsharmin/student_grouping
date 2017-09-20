@@ -29,30 +29,34 @@ Before running the algorithm, I am parsing `simple-survey.csv` file for student 
 skills_knowledge = as.character(tab[-1,2]); 
 
 # read the 2nd column for social skills
-social_skills = as.character(tab[-1,4])
+skills_social = as.character(tab[-1,4])
 
-skills = arrange_skills(total_student, skills_knowledge, social_skills)
+skills = arrange_skills(total_student, skills_knowledge, skills_social)
 ```
 
 
-Run the k-nary-tabu search algorithm. the algorithm takes considerable amount of time to run and the algorithm writes the group configuration in `group_configuration.txt` file. For new survey, run the following code fragment to generate `group_configuration.txt` file for next stages.
+Run the k-nary-tabu search algorithm. the algorithm takes considerable amount of time to run and the algorithm writes the group configuration in `group_configuration*.txt` file. For new survey, run the following code fragment to generate `group_configuration*.txt` file for next stages.
 ```{r, eval=FALSE}
 config = k_nary_tabu(total_student, grpsize, eval_maximally_diverse_config, skills)
 ```
 
 
-I am reading previously generated group configuration file: `group_configuration.txt`.
-```{r, message=FALSE, warning=FALSE, eval=FALSE}
-config = read.table('group_configuration.txt')
+I am reading previously generated group configuration file: `group_configuration*.txt`. I ran the algorithm up to 1st `intensification stage` of Tabu Search. (Check out Wiki link: `https://en.wikipedia.org/wiki/Tabu_search` for further explanation).
+```{r, message=FALSE, warning=FALSE}
+config = read.table('group_configuration_intensified_0.txt')
+head(config)
 ```
 
-Outputting the group results and checking the grouping quality.
-```{r, message=FALSE, warning=FALSE, eval=FALSE}
-ncls = 56; grpsize = 4
+Outputting the group results and checking the grouping quality based on knowledge on various subjects.
+```{r, message=FALSE, warning=FALSE}
+grps = eval_grouping(config, skills, 'skills_knowledge', tab); 
+grps
 
-skills = read_skills(ncls)
-grps = eval_grouping(config, 'subjects'); grps
-grps = eval_grouping(config, 'socials'); grps
-eval_config2(config$V1, skills)
+```
+
+Outputting the group results and checking the grouping quality based on social skills.
+```{r, message=FALSE, warning=FALSE}
+grps = eval_grouping(config, skills, 'skills_social', tab); 
+grps
 
 ```

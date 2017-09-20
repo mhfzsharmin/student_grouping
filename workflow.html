@@ -120,7 +120,7 @@ $(document).ready(function () {
 </div>
 
 
-<p>This vignette describes how to run the genetic algorithm code given a student survey.</p>
+<p>This vignette describes how to run the genetic algorithm code given a student survey. The algorithm implemented and used in this vignette was taken from the following article: <code>http://ieeexplore.ieee.org/document/5518761/</code></p>
 <pre class="r"><code>root = paste0(getwd()) #root = 
 #load the functions
 source(paste0(root, &quot;/code/ga.r&quot;))</code></pre>
@@ -163,19 +163,257 @@ head(tab)</code></pre>
 skills_knowledge = as.character(tab[-1,2]); 
 
 # read the 2nd column for social skills
-social_skills = as.character(tab[-1,4])
+skills_social = as.character(tab[-1,4])
 
-skills = arrange_skills(total_student, skills_knowledge, social_skills)</code></pre>
-<p>Run the k-nary-tabu search algorithm. the algorithm takes considerable amount of time to run and the algorithm writes the group configuration in <code>config.txt</code> file. For new survey, run the following code fragment to generate <code>config.txt</code> file for next stages.</p>
+skills = arrange_skills(total_student, skills_knowledge, skills_social)</code></pre>
+<p>Run the k-nary-tabu search algorithm. the algorithm takes considerable amount of time to run and the algorithm writes the group configuration in <code>group_configuration*.txt</code> file. For new survey, run the following code fragment to generate <code>group_configuration*.txt</code> file for next stages.</p>
 <pre class="r"><code>config = k_nary_tabu(total_student, grpsize, eval_maximally_diverse_config, skills)</code></pre>
-<p>I am reading previously generated group configuration file: <code>config.txt</code>.</p>
-<pre class="r"><code>config = read.table('config.txt')</code></pre>
-<pre class="r"><code>ncls = 56; grpsize = 4
-
-skills = read_skills(ncls)
-grps = eval_grouping(config, 'subjects'); grps
-grps = eval_grouping(config, 'socials'); grps
-eval_config2(config$V1, skills)</code></pre>
+<p>I am reading previously generated group configuration file: <code>group_configuration*.txt</code>. I ran the algorithm up to 1st <code>intensification stage</code> of Tabu Search. (Check out Wiki link: <code>https://en.wikipedia.org/wiki/Tabu_search</code> for further explanation).</p>
+<pre class="r"><code>config = read.table('group_configuration_intensified_0.txt')
+head(config)</code></pre>
+<pre><code>##   V1
+## 1 10
+## 2  9
+## 3  4
+## 4  5
+## 5  7
+## 6  8</code></pre>
+<p>Outputting the group results and checking the grouping quality based on knowledge on various subjects.</p>
+<pre class="r"><code>grps = eval_grouping(config, skills, 'skills_knowledge', tab); 
+grps</code></pre>
+<pre><code>## [[1]]
+##         Programming Math Algorithm Biology
+## 3710675           4    3         3       2
+## 3729711           3    2         1       2
+## 3932227           3    3         3       5
+## 3938521           4    4         4       4
+## 4113653           4    4         3       1
+## 
+## [[2]]
+##         Programming Math Algorithm Biology
+## 4153099           5    4         5       5
+## 3951892           4    3         2       3
+## 4104136           4    2         3       2
+## 2408356           5    5         4       1
+## 3929649           3    3         3       1
+## 4114946           4    4         3       4
+## 
+## [[3]]
+##         Programming Math Algorithm Biology
+## 3932292           4    3         2       3
+## 4111531           4    5         3       2
+## 4107470           4    4         3       4
+## 4127213           5    3         4       1
+## 3929423           3    4         3       2
+## 4115001           3    2         2       1
+## 
+## [[4]]
+##         Programming Math Algorithm Biology
+## 2406651           4    5         4       1
+## 3926166           3    3         2       4
+## 4109385           4    4         3       3
+## 4107668           4    4         3       2
+## 4108036           3    4         3       4
+## 3925979           4    2         3       1
+## 
+## [[5]]
+##         Programming Math Algorithm Biology
+## 4109586           4    4         3       1
+## 3754912           3    3         3       2
+## 3932211           3    2         2       2
+## 3931178           4    5         5       2
+## 4116907           4    4         3       4
+## 4104019           3    3         2       4
+## 
+## [[6]]
+##         Programming Math Algorithm Biology
+## 4124224           3    3         4       1
+## 3924491           4    2         2       4
+## 2416290           5    4         4       3
+## 3946639           4    5         3       2
+## 3735046           3    3         3       5
+## 4153177           4    4         4       1
+## 
+## [[7]]
+##         Programming Math Algorithm Biology
+## 4110035           2    2         5       5
+## 3710936           4    4         3       1
+## 3754915           5    2         3       1
+## 3925932           4    3         3       1
+## 3945899           3    3         2       3
+## 3926107           4    5         2       3
+## 
+## [[8]]
+##         Programming Math Algorithm Biology
+## 3946256           4    4         3       1
+## 3930043           3    4         2       3
+## 4105717           4    4         2       2
+## 4109636           3    2         4       5
+## 3929723           4    3         3       1
+## 4107783           4    3         3       2
+## 
+## [[9]]
+##         Programming Math Algorithm Biology
+## 4132267           4    4         3       2
+## 3923961           3    2         2       4
+## 4114088           3    3         3       2
+## 3925919           5    4         5       3
+## 3730206           4    3         3       1
+## 4133413           4    3         1       1
+## 
+## [[10]]
+##         Programming Math Algorithm Biology
+## id                4    4         3       1
+## 3911938           4    3         3       1
+## 4106564           5    4         3       4
+## 3744856           4    2         3       4
+## 3926509           3    4         3       2
+## 3934537           3    3         3       3
+## 
+## [[11]]
+##         Programming Math Algorithm Biology
+## 4112497           2    3         2       3
+## 3945401           5    4         3       2
+## 4226201           4    4         3       2
+## 4107138           4    3         4       4
+## 3924759           4    3         3       1
+## 2421763           4    5         4       2
+## 
+## [[12]]
+##         Programming Math Algorithm Biology
+## 3930505           5    3         3       3
+## 3707118           4    2         3       2
+## 3928726           4    5         4       5
+## 3924661           3    3         3       1
+## 3935033           4    5         4       3
+## 3933038           4    4         2       1
+## 
+## [[13]]
+##         Programming Math Algorithm Biology
+## 2370193           3    2         1       1
+## 4139206           5    4         4       1
+## 3954000           4    3         3       3
+## 3929574           2    4         3       4
+## 3923639           4    4         4       1
+## 3926789           4    2         3       3</code></pre>
+<p>Outputting the group results and checking the grouping quality based on social skills.</p>
+<pre class="r"><code>grps = eval_grouping(config, skills, 'skills_social', tab); 
+grps</code></pre>
+<pre><code>## [[1]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 3710675          4           5             5        5        4        4
+## 3729711          3           4             5        4        4        3
+## 3932227          2           4             4        4        4        4
+## 3938521          4           5             5        5        5        5
+## 4113653          4           4             3        5        4        4
+## 
+## [[2]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 4153099          3           5             4        3        5        5
+## 3951892          3           4             5        5        3        3
+## 4104136          3           4             4        2        3        4
+## 2408356          4           4             3        5        5        4
+## 3929649          4           3             4        4        4        3
+## 4114946          4           5             5        5        4        4
+## 
+## [[3]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 3932292          3           5             4        5        4        4
+## 4111531          5           3             5        3        5        4
+## 4107470          3           4             5        5        5        4
+## 4127213          4           4             5        4        4        4
+## 3929423          4           5             4        5        3        4
+## 4115001          2           4             4        5        3        5
+## 
+## [[4]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 2406651          3           3             3        3        3        3
+## 3926166          3           4             4        4        5        3
+## 4109385          4           4             5        5        5        4
+## 4107668          4           5             4        5        5        4
+## 4108036          5           5             5        5        4        5
+## 3925979          2           5             5        3        3        4
+## 
+## [[5]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 4109586          5           4             5        5        5        3
+## 3754912          2           4             5        5        4        4
+## 3932211          3           4             3        4        2        3
+## 3931178          3           5             4        5        4        4
+## 4116907          4           5             4        5        3        5
+## 4104019          4           3             5        4        5        4
+## 
+## [[6]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 4124224          4           5             5        5        3        3
+## 3924491          5           3             5        3        4        4
+## 2416290          4           4             4        5        5        3
+## 3946639          3           4             5        4        5        4
+## 3735046          2           5             5        4        4        5
+## 4153177          3           4             3        5        3        5
+## 
+## [[7]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 4110035          2           2             2        2        5        2
+## 3710936          2           5             5        5        4        4
+## 3754915          5           4             4        5        5        4
+## 3925932          5           4             5        4        5        4
+## 3945899          4           5             5        5        4        5
+## 3926107          3           5             4        5        4        4
+## 
+## [[8]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 3946256          4           4             5        5        3        5
+## 3930043          4           3             5        4        4        4
+## 4105717          3           3             3        4        4        5
+## 4109636          5           5             5        5        5        3
+## 3929723          3           5             4        5        5        4
+## 4107783          3           5             4        3        4        1
+## 
+## [[9]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 4132267          3           4             5        4        4        4
+## 3923961          1           3             3        3        3        4
+## 4114088          4           4             5        5        5        3
+## 3925919          5           5             5        4        4        5
+## 3730206          3           3             4        4        3        3
+## 4133413          3           5             5        5        5        4
+## 
+## [[10]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## id               1           4             4        4        4        4
+## 3911938          4           2             5        5        5        2
+## 4106564          3           5             3        5        3        3
+## 3744856          4           5             5        5        5        5
+## 3926509          4           4             5        5        3        4
+## 3934537          3           4             5        3        5        5
+## 
+## [[11]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 4112497          3           4             5        3        5        2
+## 3945401          5           5             4        5        3        5
+## 4226201          4           4             3        5        4        4
+## 4107138          3           4             5        4        4        3
+## 3924759          3           5             4        5        4        4
+## 2421763          3           4             5        4        5        5
+## 
+## [[12]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 3930505          3           3             2        2        4        4
+## 3707118          3           3             4        5        3        3
+## 3928726          5           4             4        4        4        5
+## 3924661          3           4             4        5        5        4
+## 3935033          4           5             5        5        5        4
+## 3933038          4           5             5        4        3        3
+## 
+## [[13]]
+##         Leadership Hard_worker Collaborative Delivery Adaptive Thorough
+## 2370193          3           4             5        5        4        5
+## 4139206          5           5             3        4        4        3
+## 3954000          3           5             5        5        5        5
+## 3929574          4           4             5        5        5        3
+## 3923639          2           3             5        3        3        3
+## 3926789          4           5             4        5        3        4</code></pre>
 
 
 

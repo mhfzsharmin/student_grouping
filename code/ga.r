@@ -7,17 +7,26 @@ arrange_skills = function(ncls, subjects, socials){
   socials[socials==""] = "0,0,0,0,0,0"
   subjects = matrix(as.integer(Reduce(rbind, strsplit(subjects, ','))), ncol=4)
   socials = matrix(as.integer(Reduce(rbind, strsplit(socials, ','))), ncol=6)
-  colnames(subjects) = c('pro', 'math', 'alg', 'bio')
-  colnames(socials) = c('leadership', 'hard_work', 'work_others', 'delivery', 'adaptive', 'through')
+  colnames(subjects) = c('Programming', 'Math', 'Algorithm', 'Biology')
+  colnames(socials) = c('Leadership', 'Hard_worker', 'Collaborative', 
+                        'Delivery', 'Adaptive', 'Thorough')
   
   subjects = as.data.frame(subjects[1:ncls,]); socials = as.data.frame(socials[1:ncls,])
-  return(list(subjects=subjects, socials=socials))
+  return(list(skills_knowledge=subjects, skills_social=socials))
 }
 
 # evalute the final group configuration
-eval_grouping = function(config, skills, crit){
+eval_grouping = function(config, skills, crit, tab=NULL){
   subjects = skills[[crit]]
-  grps = lapply(1:length(table(config)), function(x) subjects[which(config==x),])
+  grps = lapply(1:length(table(config)), function(x) {
+    tmp = subjects[which(config==x),]
+    if(is.null(tab)){
+      return(tmp)
+    }else{
+      rownames(tmp) = as.character(tab$V1)[as.integer(rownames(tmp))]
+      return(tmp)
+    }
+  })
   return(grps)
 }
 
@@ -100,7 +109,7 @@ make_neighbours = function(config, tabu=NULL){
 
 # size = nclss; k = ngrp; 
 # the following function is extension from binary tabu Search 
-k_nary_tabu = function (ncls, grpsize, objFunc, skills, iters = 10, neigh = ncls, delta = 5,
+k_nary_tabu = function (ncls, grpsize, objFunc, skills, iters = 10, stage_count = 1, neigh = ncls, delta = 5,
                         nRestarts = 2, repeatAll = 1, verbose = T) {
   
   iter <- 1; tabu = rep(F, ncls); ngrp = ceiling(ncls/grpsize)
@@ -138,7 +147,7 @@ k_nary_tabu = function (ncls, grpsize, objFunc, skills, iters = 10, neigh = ncls
           eUtility <- neighboursEUtility[move]; config = configNeigh[move,];
           tc_star = tc; tx[moves[move, 1]] = delta+tc; ty[moves[move, 2]] = delta+tc;
           print('updated')
-          write.table(config, file = 'group_configuration.txt', col.names=F, row.names=F)
+          write.table(config, file = 'group_configuration_prelim', tc, '.txt', col.names=F, row.names=F)
         }
         tabu = tx-tc > 0 | ty-tc > 0; tc = tc+1; 
         configKeep[tc, ] <- config; eUtilityKeep[tc] <- eUtility;
@@ -156,28 +165,35 @@ k_nary_tabu = function (ncls, grpsize, objFunc, skills, iters = 10, neigh = ncls
     result <- preliminarySearch(); configKeep <- result$configKeep; head(configKeep)
     aspiration <- result$aspiration; eUtilityKeep <- result$eUtilityKeep; iter <- result$tc
     tempo <- 0; restarts <- 0
-    while (tempo < aspiration & restarts < nRestarts) {
-      print(paste('restart', restarts))
-      if (verbose) 
-        cat("Intensification stage...\n")
-      eUtility <- max(eUtilityKeep); tempo <- aspiration
-      config <- configKeep[max(which(eUtilityKeep == max(eUtilityKeep))), ]
-      write.table(config, file = 'group_configuration.txt', col.names=F, row.names=F)
-      #config <- make_config(ncls, ngrp); #doing random restart
-      result <- preliminarySearch()
-      aspiration <- result$aspiration; configKeep <- result$configKeep
-      eUtilityKeep <- result$eUtilityKeep; iter <- result$tc
-      restarts <- restarts + 1
+    
+    if(stage_count > 1){ #do you want intensification stage?
+      while (tempo < aspiration & restarts < nRestarts) {
+        print(paste('restart', restarts))
+        if (verbose) 
+          cat("Intensification stage...\n")
+        eUtility <- max(eUtilityKeep); tempo <- aspiration
+        config <- configKeep[max(which(eUtilityKeep == max(eUtilityKeep))), ]
+        write.table(config, file = paste0('group_configuration_intensified_', 
+                                          restarts, '.txt'), col.names=F, row.names=F)
+        #config <- make_config(ncls, ngrp); #doing random restart
+        result <- preliminarySearch()
+        aspiration <- result$aspiration; configKeep <- result$configKeep
+        eUtilityKeep <- result$eUtilityKeep; iter <- result$tc
+        restarts <- restarts + 1
+      }
     }
-    if (verbose) 
-      cat("Diversification stage...\n")
-    config <- make_config(ncls, ngrp)
-    eUtility <- objFunc(config, skills)
-    #frequent <- apply(configKeep, 2, function(x) sum(diff(x) != 0))
-    #tabuList <- as.numeric(rank(frequent, ties.method = "random") > (size - listSize))
-    #listOrder <- sample(which(rank(frequent, ties.method = "random") > (size - listSize)), listSize)
-    result <- preliminarySearch()
-    iter <- result$tc; configKeep <- result$configKeep; eUtilityKeep <- result$eUtilityKeep
+    
+    if(stage_count > 2){# do you want diversification stage?
+      if (verbose) 
+        cat("Diversification stage...\n")
+      config <- make_config(ncls, ngrp) #doing random restart
+      eUtility <- objFunc(config, skills)
+      #frequent <- apply(configKeep, 2, function(x) sum(diff(x) != 0))
+      #tabuList <- as.numeric(rank(frequent, ties.method = "random") > (size - listSize))
+      #listOrder <- sample(which(rank(frequent, ties.method = "random") > (size - listSize)), listSize)
+      result <- preliminarySearch()
+      iter <- result$tc; configKeep <- result$configKeep; eUtilityKeep <- result$eUtilityKeep
+    }
   }
   
   return(config)
@@ -333,7 +349,7 @@ read_skills_old = function(ncls, info){
   colnames(socials) = c('leadership', 'hard_work', 'work_others', 'delivery', 'adaptive', 'through')
   
   subjects = as.data.frame(subjects[1:ncls,]); socials = as.data.frame(socials[1:ncls,])
-  return(list(subjects=subjects, socials=socials))
+  return(list(skills_knowledge=subjects, skills_social=socials))
 }
 
 
@@ -342,7 +358,7 @@ control = function(){
   ncls = 56; grpsize = 4
   config = k_nary_tabu(ncls, grpsize, eval_config2)
   config = read.table('Downloads/config_restart_.txt')
-  skills = read_skills(ncls)
+  skills = read_skills_old(ncls)
   grps = eval_grouping(config, 'subjects'); grps
   grps = eval_grouping(config, 'socials'); grps
   eval_config2(config$V1, skills)
@@ -357,9 +373,11 @@ control = function(){
   write.table(students, 'Downloads/congroup.txt', row.names = F, sep='\t')
   
   config = config[-nokeep,]; 
-  skills$subjects = skills$subjects[-nokeep,]; rownames(skills$subjects) = 1:nrow(skills$subjects)
-  skills$socials = skills$socials[-nokeep,]; rownames(skills$socials) = 1:nrow(skills$socials)
-  grps = eval_grouping(config, skills, 'socials'); grps
+  skills$skills_knowledge = skills$skills_knowledge[-nokeep,]; 
+  rownames(skills$skills_knowledge) = 1:nrow(skills$skills_knowledge)
+  skills$skills_social = skills$skills_social[-nokeep,]; 
+  rownames(skills$skills_social) = 1:nrow(skills$skills_social)
+  grps = eval_grouping(config, skills, 'skills_social'); grps
   lapply(grps, function(x){ 
     rownames(x) = rownames(students)[as.integer(rownames(x))]; 
     x
